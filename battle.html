@@ -1,0 +1,344 @@
+<!DOCTYPE html> 
+<html lang="en">
+<head>
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>Monster Battle Game</title> 
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+   
+    <style>
+        body {
+            font-family: 'Press Start 2P', cursive;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #222;
+            color: #fff;
+        }
+
+        #battleField {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin-top: 50px;
+            border: 4px solid #fff;
+            padding: 20px;
+            background-color: #333;
+            border-radius: 10px;
+            box-shadow: 0 0 20px #0ff;
+        }
+
+        .monster {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .hp-bar {
+            width: 100px;
+            height: 20px;
+            background-color: #444;
+            margin-top: 10px;
+        }
+
+        .hp {
+            height: 100%;
+            background-color: #0f0; /* HPゲージの色 */
+        }
+
+        button {
+        background-color: #222;
+        color: #0ff;
+        border: 2px solid #0ff;
+        border-radius: 8px;
+        font-family: 'Press Start 2P', cursive;
+        transition: 0.3s;
+}
+
+button:hover {
+    background-color: #0ff;
+    color: #222;
+}
+
+        #monsterImages {
+            margin-top: 20px;
+        }
+
+        #monsterImages button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer; /* カーソルをポインタに */
+        }
+
+        #actionButtons {
+            display: none;
+            margin-top: 20px;
+        }
+
+        #actionButtons button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+       #result, #playerMove, #computerMove, #actionSelect {
+            background-color: rgba(0, 0, 0, 0.8);
+            border: 3px solid #fff;
+            padding: 10px;
+            width: 80%;
+            margin: 10px auto;
+            color: #0f0;
+            font-size: 16px;
+            text-align: left;
+            box-shadow: 0 0 10px #000;
+            border-radius: 10px;
+            text-align: center;
+    }
+        
+
+        .attack {
+            font-size: 24px;
+            margin-top: 20px;
+        }
+
+        #fireball {
+            position: absolute;
+            display: none;
+            width: 20px;
+            height: 20px;
+            background-color: orange;
+            border-radius: 50%; /* 丸くする */
+            animation: fireball 1s linear; /* アニメーション設定 */
+        }
+
+        @keyframes fireball {
+            from {
+                transform: translateX(0);
+            }
+            to {
+                transform: translateX(500px); /* 右に移動 */
+            }
+        }
+        
+        img {
+            width: 200px;
+            height: 200px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>JANKEN Monster Battle</h1> 
+
+    <!-- バトルフィールドの表示 -->
+    <div id="battleField">
+        <div class="monster" id="player">
+            <h2>YOU</h2>
+            <div id="playerMonsterImg">
+                <!-- プレイヤーのモンスター画像 -->
+                <img src="images/monster1.gif" alt="Player Monster" width="100" height="100">
+            </div>
+            <!-- プレイヤーのHPバー -->
+            <div class="hp-bar">
+                <div id="playerHp" class="hp" style="width: 100%;"></div>
+            </div>
+            <div id="playerMove"></div>
+        </div>
+
+        <div class="monster" id="computer">
+            <h2>RIVAL</h2>
+            <div id="computerMonsterImg">
+                <!-- コンピューターのモンスター画像 -->
+                <img src="images/monster2.gif" alt="Computer Monster" width="100" height="100">
+            </div>
+            <!-- コンピューターのHPバー -->
+            <div class="hp-bar">
+                <div id="computerHp" class="hp" style="width: 100%;"></div>
+            </div>
+            <div id="computerMove"></div> <!-- コンピューターの手 -->
+        </div>
+    </div>
+
+    <div id ="actionSelect">モンスターと出す技を選ぼう！！！</div>
+
+    <!-- モンスター選択ボタン -->
+    <div id="monsterImages">
+        <button onclick="selectMonster('monster1')">Monster 1 (得意技：グー)</button>
+        <button onclick="selectMonster('monster2')">Monster 2 (得意技：パー)</button>
+        <button onclick="selectMonster('monster3')">Monster 3 (得意技：チョキ)</button>
+    </div>
+
+    
+
+    <!-- ジャンケンの手選択ボタン -->
+    <div id="actionButtons">
+        <button onclick="selectMove('rock')">グー</button>
+        <button onclick="selectMove('paper')">パー</button>
+        <button onclick="selectMove('scissors')">チョキ</button>
+    </div>
+
+    <!-- 攻撃ボタン -->
+    <div class="attack">
+        <button onclick="attack()">攻撃！！！</button>
+    </div>
+
+    <div id="result"></div> <!-- 勝敗結果の表示 -->
+
+    <div id="fireball"></div> <!-- 火の玉アニメーション用要素 -->
+
+
+    <script>
+        // 初期HP
+        let playerHp = 100;
+        let computerHp = 100;
+
+        const moveMap = {
+            rock: 'グー',
+            paper: 'パー',
+            scissors: 'チョキ'
+        };
+
+        // プレイヤーとコンピューターの選択状態
+        let playerChoice = '';
+        let computerChoice = '';
+        let playerMove = '';
+        let computerMove = '';
+
+        // モンスターの設定
+        let monsters = [
+            { 
+                name: 'monster1', 
+                img: 'images/monster1.gif', 
+                attack: { 'rock': 50, 'scissors': 30, 'paper': 20 }, 
+                strong: 'rock', weak: 'paper' 
+            },
+            { 
+                name: 'monster2', 
+                img: 'images/monster2.gif', 
+                attack: { 'paper': 50, 'rock': 30, 'scissors': 20 }, 
+                strong: 'paper', weak: 'scissors' 
+            },
+            { 
+                name: 'monster3', 
+                img: 'images/monster3.gif', 
+                attack: { 'scissors': 50, 'paper': 30, 'rock': 20 }, 
+                strong: 'scissors', weak: 'rock' 
+            }
+        ];
+
+        // プレイヤーがモンスターを選ぶ
+        function selectMonster(choice) {
+            playerChoice = choice;
+            document.getElementById('playerMonsterImg').innerHTML = `<img src="images/${choice}.gif" alt="Player Monster" width="100" height="100">`;
+            document.getElementById('monsterImages').style.display = 'none';
+            document.getElementById('actionButtons').style.display = 'block';
+        }
+
+        // コンピューターのモンスターをランダムで選択
+        function computerSelectMonster() {
+            computerChoice = monsters[Math.floor(Math.random() * monsters.length)].name;
+            document.getElementById('computerMonsterImg').innerHTML = `<img src="images/${computerChoice}.gif" alt="Computer Monster" width="100" height="100">`;
+        }
+
+        // プレイヤーがジャンケンの手を選ぶ
+        function selectMove(move) {
+            playerMove = move;
+            const moveMap = { rock: 'グー', paper: 'パー', scissors: 'チョキ' };
+            document.getElementById('playerMove').textContent = `こちらの攻撃！：${moveMap[playerMove]}`;
+        }
+
+        // 攻撃ボタンを押したとき
+        function attack() {
+            if (!playerMove) {
+                alert("どのモンスターを選ぶ？モンスターを選んでね！");
+                return;
+            }
+
+            computerSelectMonster(); // 敵モンスター選ぶ
+
+            computerMove = monsters.find(monster => monster.name === computerChoice).strong;
+
+            document.getElementById('computerMove').textContent = `ライバルの攻撃！：${moveMap[computerMove]}`;
+
+            let resultMessage = '';
+            let playerMonster = monsters.find(monster => monster.name === playerChoice);
+            let computerMonster = monsters.find(monster => monster.name === computerChoice);
+
+            // 火の玉アニメーション開始
+            let fireball = document.getElementById('fireball');
+            fireball.style.left = '150px';
+            fireball.style.top = '150px';
+            fireball.style.display = 'block';
+            setTimeout(() => { fireball.style.display = 'none'; }, 1000);
+
+            // 勝敗とダメージ計算（ジャンケンルール）
+            if (playerMove === 'rock') {
+                if (computerMove === 'scissors') {
+                    resultMessage = 'You win!';
+                    computerHp -= playerMonster.attack['rock'];
+                } else if (computerMove === 'paper') {
+                    resultMessage = 'You lose!';
+                    playerHp -= playerMonster.attack['rock'];
+                } else {
+                    resultMessage = 'Draw!';
+                    playerHp -= 20;
+                    computerHp -= 20;
+                }
+            } else if (playerMove === 'paper') {
+                if (computerMove === 'rock') {
+                    resultMessage = 'You win!';
+                    computerHp -= playerMonster.attack['paper'];
+                } else if (computerMove === 'scissors') {
+                    resultMessage = 'You lose!';
+                    playerHp -= playerMonster.attack['paper'];
+                } else {
+                    resultMessage = 'Draw!';
+                    playerHp -= 20;
+                    computerHp -= 20;
+                }
+            } else if (playerMove === 'scissors') {
+                if (computerMove === 'paper') {
+                    resultMessage = 'You win!';
+                    computerHp -= playerMonster.attack['scissors'];
+                } else if (computerMove === 'rock') {
+                    resultMessage = 'You lose!';
+                    playerHp -= playerMonster.attack['scissors'];
+                } else {
+                    resultMessage = 'Draw!';
+                    playerHp -= 20;
+                    computerHp -= 20;
+                }
+            }
+
+            // HPバーの更新
+            document.getElementById('playerHp').style.width = playerHp + '%';
+            document.getElementById('computerHp').style.width = computerHp + '%';
+
+            document.getElementById('result').textContent = resultMessage; // 結果表示
+
+            // HPが0以下になったら勝敗確定
+            if (playerHp <= 0) {
+                document.getElementById('playerHp').style.width = '0%';
+                resultMessage = 'ライバルの勝ち！';
+            }
+            if (computerHp <= 0) {
+                document.getElementById('computerHp').style.width = '0%';
+                resultMessage = '君の勝ち！';
+            }
+
+            // 終了後にアラートで表示してリロード（リセット）
+            if (playerHp <= 0 || computerHp <= 0) {
+                setTimeout(() => {
+                    alert(resultMessage + ' 戦いはまだまだ続く！');
+                    location.reload(); // ページリロードでリセット
+                }, 500);
+            }
+        }
+    </script>
+
+</body>
+</html>
