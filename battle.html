@@ -27,6 +27,7 @@
             background-color: #333;
             border-radius: 10px;
             box-shadow: 0 0 20px #0ff;
+            position: relative;
         }
 
         .monster {
@@ -36,7 +37,7 @@
         }
 
         .hp-bar {
-            width: 100px;
+            width: 200px;
             height: 20px;
             background-color: #444;
             margin-top: 10px;
@@ -45,21 +46,22 @@
         .hp {
             height: 100%;
             background-color: #0f0; /* HPゲージの色 */
+            border-radius: 5px;
         }
 
         button {
-        background-color: #222;
-        color: #0ff;
-        border: 2px solid #0ff;
-        border-radius: 8px;
-        font-family: 'Press Start 2P', cursive;
-        transition: 0.3s;
-}
+            background-color: #222;
+            color: #0ff;
+            border: 2px solid #0ff;
+            border-radius: 8px;
+            font-family: 'Press Start 2P', cursive;
+            transition: 0.3s;
+        }
 
-button:hover {
-    background-color: #0ff;
-    color: #222;
-}
+        button:hover {
+            background-color: #0ff;
+            color: #222;
+        }
 
         #monsterImages {
             margin-top: 20px;
@@ -104,23 +106,34 @@ button:hover {
             margin-top: 20px;
         }
 
-        #fireball {
+       #fireball {
             position: absolute;
             display: none;
-            width: 20px;
-            height: 20px;
+            width: 30px;
+            height: 30px;
             background-color: orange;
-            border-radius: 50%; /* 丸くする */
-            animation: fireball 1s linear; /* アニメーション設定 */
-        }
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }       
 
-        @keyframes fireball {
-            from {
-                transform: translateX(0);
-            }
-            to {
-                transform: translateX(500px); /* 右に移動 */
-            }
+        
+
+       @keyframes fireball {
+    0% {
+            transform: translate(-50%, -50%) translateX(0);
+            opacity: 1;
+        }
+    100% {
+            transform: translate(-50%, -50%) translateX(200px); /* またはお好みの距離 */
+            opacity: 0;
+        }
+        }  
+
+    .fireball-animate {
+            animation: fireballMove 1s linear forwards;
         }
         
         img {
@@ -258,6 +271,7 @@ button:hover {
                 return;
             }
 
+
             computerSelectMonster(); // 敵モンスター選ぶ
 
             computerMove = monsters.find(monster => monster.name === computerChoice).strong;
@@ -267,13 +281,17 @@ button:hover {
             let resultMessage = '';
             let playerMonster = monsters.find(monster => monster.name === playerChoice);
             let computerMonster = monsters.find(monster => monster.name === computerChoice);
+            
+            showFireball();
 
             // 火の玉アニメーション開始
             let fireball = document.getElementById('fireball');
-            fireball.style.left = '150px';
-            fireball.style.top = '150px';
-            fireball.style.display = 'block';
-            setTimeout(() => { fireball.style.display = 'none'; }, 1000);
+                fireball.style.display = 'block';
+                fireball.style.animation = 'none'; // リセットしてもう一度動かす
+                fireball.offsetHeight; // 再描画をトリガー
+                fireball.style.animation = 'fireball 1s linear forwards';
+            
+                setTimeout(() => { fireball.style.display = 'none'; }, 1000);
 
             // 勝敗とダメージ計算（ジャンケンルール）
             if (playerMove === 'rock') {
@@ -313,6 +331,21 @@ button:hover {
                     computerHp -= 20;
                 }
             }
+
+        function showFireball() {
+            let fireball = document.getElementById('fireball');
+            fireball.style.display = 'block';
+
+          // アニメーション再適用（連続再生対策）
+            fireball.style.animation = 'none';
+            fireball.offsetHeight; // 再計算トリガー
+            fireball.style.animation = 'fireball 1s linear forwards';
+
+            setTimeout(() => {
+            fireball.style.display = 'none';
+            }, 1000);
+            }
+
 
             // HPバーの更新
             document.getElementById('playerHp').style.width = playerHp + '%';
